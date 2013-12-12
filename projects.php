@@ -72,5 +72,34 @@ print_r($_GET);
 <h2>Project 4: Feedback Form Admin</h2>
 <p>Now that authentication is working, create a page (admin.php) that returns, in an HTML table, all the feedback stored in the database. Make sure only you can access this page (check for the $_SESSION['username'] variable and make sure it matches your ODIN name).</p>
 
+<h2>Project 5: LDAP Group Checks</h2>
+<p>Edit your admin.php page so that anyone in the "arc", or "arcstaff" groups can view the page after logging in through CAS.</p>
+
+<p>PSU has an LDAP server available at ldap.oit.pdx.edu. You can query this server to figure out which groups a user belongs to. First, connect to the server:</p>
+<code>$connection = ldap_connect('ldap.oit.pdx.edu');</code>
+<p>Now we need to construct an LDAP query to determine if the user is in the "arc" or the "arcstaff" groups. To get <strong>all</strong> the groups a user belongs to, try this:</p>
+<code>$search = ldap_search($connection, 'dc=pdx,dc=edu', '(& (memberUid=mdj2) (objectclass=posixGroup))');
+$results = ldap_get_entries($connection, $search);
+print_r($results);
+</code>
+
+<p>You <em>could</em> iterate through all the results, and look for a "cn" attribute equal to "arcstaff" or "arc". Another way, is to filter the LDAP results even further:</p>
+
+<code>$search = ldap_search($connection, 'dc=pdx,dc=edu', '(& (| (cn=arc) (cn=arcstaff)) (memberUid=mdj2) (objectclass=posixGroup))');
+$results = ldap_get_entries($connection, $search);
+print_r($results);
+</code>
+
+<p><em>Pay particular attention to the third argument to the ldap_search function, so you know how ldap search queries are constructed.</em></p>
+
+<p>With that, you can just check the <samp>$results['count']</samp> to see if it is greater than 0. If it is, you know the user is in the arc or arcstaff group.</p>
+
+<p>You will need to replace the username "mdj2" with the username you validated with CAS (which is stored in a session variable). <strong>As with all forms of untrusted user input, you need to sanitize the it</strong> before using it. In this case, you need to sanitize the username when you pass it to the ldap_search function. Unfortunately, PHP lacks an LDAP sanitation function. However, <a href="http://www.ietf.org/rfc/rfc2254.txt">RFC 2254</a> describes the characters which need escaping: *, (, ), \, and NUL. Instead of escaping these characters, you are free to simply remove them. ODIN usernames should never contain them.</p>
+
+<h2>Project 6: Deleting Feedback with JQuery &amp; AJAX</h2>
+<p>Alter your admin.php page so that each row in the table has a delete link or button. When the button is clicked, construct a AJAX request using JQuery that sends a POST request to "delete.php", which will delete that entry from the feedback database.</p>
+
+<p>After a successful delete, the row should be removed from the DOM.</p>
+
 </body>
 </html>
